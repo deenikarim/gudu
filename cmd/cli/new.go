@@ -33,7 +33,7 @@ func doNew(appName string) {
 	color.Green("\tcloning repository.....")
 	// Clones the repository into the given dir, just as a normal git clone does
 	_, err := git.PlainClone("./"+appName, false, &git.CloneOptions{
-		URL:      "https://github.com/deenikarim/gudu-skeleton.git",
+		URL:      "git@github.com:deenikarim/gudu-skeleton.git",
 		Progress: os.Stdout,
 		Depth:    1,
 	})

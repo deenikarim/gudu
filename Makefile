@@ -10,6 +10,13 @@ cover:
 coverage:
 	@go test -cover ./...
 
-## build_cli: builds the command line tool celeritas and copies it to myapp
+## build_cli: builds the command line tool gudu and copies it to myapp
 build_cli:
 	@go build -o ../myapp/gudu ./cmd/cli
+
+## build: builds the command line tool dist directory
+build:
+	@go build -o ./dist/gudu ./cmd/cli
+
+install_cli:
+	@go build -o ~/go/bin/gudu -ldflags '-s -w' ./cmd/cli
