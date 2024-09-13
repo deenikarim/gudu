@@ -117,11 +117,11 @@ func doNew(appName string) {
 	// delete the go mod file that came with the cloning and create the appropriate mod file
 	color.Yellow("\tCreating the go mod file....")
 	_ = os.Remove("./" + appName + "/go.mod")
-	d, err = templateFS.ReadFile("templates/go.mod.txt")
+	data, err := templateFS.ReadFile("templates/go.mod.txt")
 	if err != nil {
 		existGracefully(err)
 	}
-	mod := string(d)
+	mod := string(data)
 	mod = strings.ReplaceAll(mod, "${APP_NAME}", appURL)
 
 	err = copyDataToFile([]byte(mod), "./"+appName+"/go.mod")
