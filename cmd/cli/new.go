@@ -141,7 +141,8 @@ func doNew(appName string) {
 	//run go mod tidy in the project directory
 	color.Yellow("\tRunning go mod tidy....")
 	cmd := exec.Command("go", "mod", "tidy")
-	err = cmd.Run()
+	err = cmd.Start()
+
 	if err != nil {
 		existGracefully(err)
 	}
