@@ -107,7 +107,7 @@ func existGracefully(err error, msg ...string) {
 func walkFuncUpdateSourceFiles(path string, fi os.FileInfo, err error) error {
 	// check for error before doing anything
 	if err != nil {
-		existGracefully(err)
+		return err
 	}
 
 	// check if the current file is directory

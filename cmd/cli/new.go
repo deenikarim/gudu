@@ -124,18 +124,15 @@ func doNew(appName string) {
 	mod := string(d)
 	env = strings.ReplaceAll(mod, "${APP_NAME}", appURL)
 
-	err = copyDataToFile([]byte(mod), fmt.Sprintf("./%s/go.mod", appName))
+	err = copyDataToFile([]byte(mod), "./"+appName+"/go.mod")
 	if err != nil {
 		existGracefully(err)
 	}
 
 	//update the existing go files with the correct imports/name
 	color.Yellow("\tupdate the existing go files with the correct imports names....")
-	err = os.Chdir("./" + appName)
-	if err != nil {
-		_ = fmt.Errorf("error while changing directory %w", err)
-		return
-	}
+	_ = os.Chdir("./" + appName)
+
 	updateSource()
 
 	//run go mod tidy in the project directory
