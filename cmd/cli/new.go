@@ -148,6 +148,6 @@ func doNew(appName string) {
 	}
 
 	// final message to the user of the package
-	color.Green("Done building" + appURL)
+	color.Green("Done building " + appURL)
 	color.Green("Good luck with project")
 }
