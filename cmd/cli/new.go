@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
-	"io"
 	"os"
 	"os/exec"
 	"runtime"
@@ -14,22 +13,21 @@ import (
 var appURL string
 
 func doNew(appName string) {
-
+	//Sanitize the Application Name: Ensures that the app name is in lowercase
+	//and extracts the name if it's in a URL format.
 	appName = strings.ToLower(appName)
 
 	appURL = appName
 
-	// sanitize the application name: convert url to a single word name for application
 	if strings.Contains(appName, "/") {
-		// split and take the last element
+		// Extract the last element after "/"
 		exploded := strings.SplitAfter(appName, "/")
 		appName = exploded[(len(exploded) - 1)]
 	}
 
 	//log.Println("app name is", appName)
 
-	// git clone the skeleton application
-	// Clone the given repository to the given directory
+	// Clone the skeleton repository
 	color.Green("\tcloning repository.....")
 	// Clones the repository into the given dir, just as a normal git clone does
 	_, err := git.PlainClone("./"+appName, false, &git.CloneOptions{
@@ -42,10 +40,11 @@ func doNew(appName string) {
 		exitGracefully(err)
 	}
 
-	//remove the .git repository
+	// remove the .git repository
 	// when repository is cloned there will be a git repository indicating that all the codes
 	// belong to a remote repository and that is wrong
 	// remove .git directory
+	color.Yellow("\tRemoving .git directory...")
 	err = os.RemoveAll(fmt.Sprintf("./%s/.git", appName))
 	if err != nil {
 		exitGracefully(err)
@@ -66,58 +65,36 @@ func doNew(appName string) {
 		exitGracefully(err)
 	}
 
-	//create a makefile based on user's operating system
+	// OS-specific Makefile handling
+	var makefileSource string
 	if runtime.GOOS == "windows" {
-		source, err := os.Open(fmt.Sprintf("./%s/Makefile.windows", appName))
-		if err != nil {
-			exitGracefully(err)
-		}
-		defer func(source *os.File) {
-			_ = source.Close()
-		}(source)
-
-		dest, err := os.Create(fmt.Sprintf("./%s/Makefile", appName))
-		if err != nil {
-			exitGracefully(err)
-		}
-		defer func(dest *os.File) {
-			_ = dest.Close()
-		}(dest)
-
-		_, err = io.Copy(dest, source)
-		if err != nil {
-			exitGracefully(err)
-		}
-
+		makefileSource = fmt.Sprintf("./%s/Makefile.windows", appName)
 	} else {
-		source, err := os.Open(fmt.Sprintf("./%s/Makefile.mac", appName))
-		if err != nil {
-			exitGracefully(err)
-		}
-		defer func(source *os.File) {
-			_ = source.Close()
-		}(source)
-
-		dest, err := os.Create(fmt.Sprintf("./%s/Makefile", appName))
-		if err != nil {
-			exitGracefully(err)
-		}
-		defer func(dest *os.File) {
-			_ = dest.Close()
-		}(dest)
-
-		_, err = io.Copy(dest, source)
-		if err != nil {
-			exitGracefully(err)
-		}
+		makefileSource = fmt.Sprintf("./%s/Makefile.mac", appName)
 	}
-	_ = os.Remove("./" + appName + "/Makefile.windows")
-	_ = os.Remove("./" + appName + "/Makefile.mac")
+	err = copyFile(makefileSource, fmt.Sprintf("./%s/Makefile", appName))
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	// Clean up OS-specific files
+	color.Yellow("\tCleaning up OS-specific Makefiles...")
+	//_ = os.Remove("./" + appName + "/Makefile.windows")
+	//_ = os.Remove("./" + appName + "/Makefile.mac")
+	go func() {
+		_ = os.Remove(fmt.Sprintf("./%s/Makefile.windows", appName))
+	}()
+	go func() {
+		_ = os.Remove(fmt.Sprintf("./%s/Makefile.mac", appName))
+	}()
 
 	//update the go mod file
 	// delete the go mod file that came with the cloning and create the appropriate mod file
 	color.Yellow("\tCreating the go mod file....")
-	_ = os.Remove("./" + appName + "/go.mod")
+	err = os.Remove("./" + appName + "/go.mod")
+	if err != nil {
+		exitGracefully(err)
+	}
 	d, err = templateFS.ReadFile("templates/go.mod.txt")
 	if err != nil {
 		exitGracefully(err)
@@ -125,7 +102,7 @@ func doNew(appName string) {
 	mod := string(d)
 	mod = strings.ReplaceAll(mod, "${APP_NAME}", appURL)
 
-	err = copyDataToFile([]byte(mod), "./"+appName+"/go.mod")
+	err = copyDataToFile([]byte(mod), fmt.Sprintf("./%s/go.mod", appName))
 	if err != nil {
 		exitGracefully(err)
 	}

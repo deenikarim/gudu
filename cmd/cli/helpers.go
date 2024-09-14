@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	_ "github.com/go-sql-driver/mysql"
+	"io"
 	"path/filepath"
 	"strings"
 
@@ -88,6 +89,7 @@ func showHelp() {
 `)
 }
 
+// exitGracefully Helper function to handle errors gracefully
 func exitGracefully(err error, msg ...string) {
 	message := ""
 	if len(msg) > 0 {
@@ -102,6 +104,28 @@ func exitGracefully(err error, msg ...string) {
 		color.Green("finished!")
 	}
 	os.Exit(0)
+}
+
+// copyFile Helper function to copy files
+func copyFile(sourcePath, destPath string) error {
+	source, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer func(source *os.File) {
+		_ = source.Close()
+	}(source)
+
+	dest, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer func(dest *os.File) {
+		_ = dest.Close()
+	}(dest)
+
+	_, err = io.Copy(dest, source)
+	return err
 }
 
 func walkFuncUpdateSourceFiles(path string, fi os.FileInfo, err error) error {
