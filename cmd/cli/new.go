@@ -5,7 +5,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-git/go-git/v5"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -22,11 +21,12 @@ func doNew(appName string) {
 
 	// sanitize the application name: convert url to a single word name for application
 	if strings.Contains(appName, "/") {
+		// split and take the last element
 		exploded := strings.SplitAfter(appName, "/")
 		appName = exploded[(len(exploded) - 1)]
 	}
 
-	log.Println("app name is", appName)
+	//log.Println("app name is", appName)
 
 	// git clone the skeleton application
 	// Clone the given repository to the given directory
