@@ -39,22 +39,23 @@ func doNew(appName string) {
 	})
 
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	//remove the .git repository
 	// when repository is cloned there will be a git repository indicating that all the codes
 	// belong to a remote repository and that is wrong
+	// remove .git directory
 	err = os.RemoveAll(fmt.Sprintf("./%s/.git", appName))
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	//create a ready to use .env file
 	color.Yellow("\tCreating .env file")
 	d, err := templateFS.ReadFile("templates/env.txt")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 	env := string(d)
 	env = strings.ReplaceAll(env, "${APP_NAME}", appName)
@@ -62,14 +63,14 @@ func doNew(appName string) {
 
 	err = copyDataToFile([]byte(env), fmt.Sprintf("./%s/.env", appName))
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	//create a makefile based on user's operating system
 	if runtime.GOOS == "windows" {
 		source, err := os.Open(fmt.Sprintf("./%s/Makefile.windows", appName))
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 		defer func(source *os.File) {
 			_ = source.Close()
@@ -77,7 +78,7 @@ func doNew(appName string) {
 
 		dest, err := os.Create(fmt.Sprintf("./%s/Makefile", appName))
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 		defer func(dest *os.File) {
 			_ = dest.Close()
@@ -85,13 +86,13 @@ func doNew(appName string) {
 
 		_, err = io.Copy(dest, source)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 	} else {
 		source, err := os.Open(fmt.Sprintf("./%s/Makefile.mac", appName))
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 		defer func(source *os.File) {
 			_ = source.Close()
@@ -99,7 +100,7 @@ func doNew(appName string) {
 
 		dest, err := os.Create(fmt.Sprintf("./%s/Makefile", appName))
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 		defer func(dest *os.File) {
 			_ = dest.Close()
@@ -107,7 +108,7 @@ func doNew(appName string) {
 
 		_, err = io.Copy(dest, source)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 	}
 	_ = os.Remove("./" + appName + "/Makefile.windows")
@@ -117,16 +118,16 @@ func doNew(appName string) {
 	// delete the go mod file that came with the cloning and create the appropriate mod file
 	color.Yellow("\tCreating the go mod file....")
 	_ = os.Remove("./" + appName + "/go.mod")
-	data, err := templateFS.ReadFile("templates/go.mod.txt")
+	d, err = templateFS.ReadFile("templates/go.mod.txt")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
-	mod := string(data)
+	mod := string(d)
 	mod = strings.ReplaceAll(mod, "${APP_NAME}", appURL)
 
 	err = copyDataToFile([]byte(mod), "./"+appName+"/go.mod")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	//update the existing go files with the correct imports/name
@@ -141,7 +142,7 @@ func doNew(appName string) {
 	err = cmd.Start()
 
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	// final message to the user of the package

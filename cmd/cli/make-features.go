@@ -18,40 +18,40 @@ func doAuth() error {
 
 	err := copyFilesFromTemplate("templates/migrations/auth_table."+dbType+".sql", targetUpFilePath)
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	err = copyDataToFile([]byte("drop table if exists users cascade"), targetDownFilePath)
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	/*run up migration
 	err = doMigrate("up", "")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}*/
 
 	// copy the data models
 	err = copyFilesFromTemplate("templates/data/user.go.txt", gud.RootPath+"/data/user.go")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	err = copyFilesFromTemplate("templates/data/token.go.txt", gud.RootPath+"/data/token.go")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	// copy the  middleware
 	err = copyFilesFromTemplate("templates/middleware/auth-web.go.txt", gud.RootPath+"/middleware/auth-web.go")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	err = copyFilesFromTemplate("templates/middleware/auth-token.go.txt", gud.RootPath+"/middleware/auth-api.go")
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	//display message feedback to end users

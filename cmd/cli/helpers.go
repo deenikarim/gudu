@@ -15,12 +15,12 @@ func setUp(arg2, arg3 string) {
 	if arg2 != "new" && arg2 != "help" && arg2 != "version" {
 		path, err := os.Getwd()
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 		err = gud.LoadEnv(path + "/.env")
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 		gud.RootPath = path
@@ -88,7 +88,7 @@ func showHelp() {
 `)
 }
 
-func existGracefully(err error, msg ...string) {
+func exitGracefully(err error, msg ...string) {
 	message := ""
 	if len(msg) > 0 {
 		message = msg[0]
@@ -126,7 +126,7 @@ func walkFuncUpdateSourceFiles(path string, fi os.FileInfo, err error) error {
 		//read file content
 		r, err := os.ReadFile(path)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 		newContent := strings.Replace(string(r), "myapp", appURL, -1)
@@ -134,7 +134,7 @@ func walkFuncUpdateSourceFiles(path string, fi os.FileInfo, err error) error {
 		// write the changed file
 		err = os.WriteFile(path, []byte(newContent), 0)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 	}
 	return nil
@@ -144,6 +144,6 @@ func updateSource() {
 	// walk through the entire project including folder directories and subfolders
 	err := filepath.Walk(".", walkFuncUpdateSourceFiles)
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 }

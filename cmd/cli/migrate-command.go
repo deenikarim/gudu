@@ -6,7 +6,7 @@ import "errors"
 func doMigrate(arg3, arg4 string) error {
 	dsn, err := getDSN()
 	if err != nil {
-		existGracefully(errors.New("error getting dsn"))
+		exitGracefully(errors.New("error getting dsn"))
 
 	}
 	switch arg3 {

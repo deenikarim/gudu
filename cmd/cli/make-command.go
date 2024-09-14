@@ -13,7 +13,7 @@ func doMake(arg3, arg4 string) error {
 		dbType := gud.DBConnection.DatabaseType
 		// checking for migration name
 		if arg4 == "" {
-			existGracefully(errors.New("must give the migration a name"))
+			exitGracefully(errors.New("must give the migration a name"))
 		}
 
 		migrationFileName := fmt.Sprintf("%d_%s", time.Now().UnixMicro(), arg4)
@@ -24,18 +24,18 @@ func doMake(arg3, arg4 string) error {
 
 		err := copyFilesFromTemplate("templates/migrations/migration."+dbType+".up.sql", targetUpFilePath)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 		err = copyFilesFromTemplate("templates/migrations/migration."+dbType+".up.sql", targetDownFilePath)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 	case "auth":
 		err := doAuth()
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 
 	}

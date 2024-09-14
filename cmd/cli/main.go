@@ -17,7 +17,7 @@ func main() {
 	// arg 1 = gudu: load the command line arguments
 	arg2, arg3, arg4, err := validateInputs()
 	if err != nil {
-		existGracefully(err)
+		exitGracefully(err)
 	}
 
 	// load setup
@@ -28,18 +28,18 @@ func main() {
 		showHelp()
 	case "new":
 		if arg3 == "" {
-			existGracefully(errors.New("new require an application name"))
+			exitGracefully(errors.New("new require an application name"))
 		}
 		doNew(arg3)
 	case "version":
 		color.Yellow("Application version: " + version)
 	case "make":
 		if arg3 == "" {
-			existGracefully(errors.New("make required a subcommand: (migration|handlers)"))
+			exitGracefully(errors.New("make required a subcommand: (migration|handlers)"))
 		}
 		err = doMake(arg3, arg4)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 	case "migrate":
 		if arg3 == "" {
@@ -47,7 +47,7 @@ func main() {
 		}
 		err = doMigrate(arg3, arg4)
 		if err != nil {
-			existGracefully(err)
+			exitGracefully(err)
 		}
 		message = "migrations complete!"
 	case "auth":
@@ -55,7 +55,7 @@ func main() {
 	default:
 		showHelp()
 	}
-	existGracefully(nil, message)
+	exitGracefully(nil, message)
 }
 
 func validateInputs() (string, string, string, error) {
