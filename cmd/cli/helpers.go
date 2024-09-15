@@ -93,6 +93,8 @@ func showHelp() {
 	make migration <name>   -create two files, one for up migration and the other for down migration
 	make controllers <name> -create a stub controller in the controllers folder
 	make models <name>      -create a new model in the data folder
+	make auth 				-create and run migration for authentication tables, creates models and middlewares
+	make controllers        -create a stub controllers in the controllers folder
 
 `)
 }

@@ -29,13 +29,13 @@ func doAuth() error {
 		exitGracefully(err)
 	}
 
-	//run up migration
+	//run up migration by adding migrate command directly
 	err = doMigrate("up", "")
 	if err != nil {
 		exitGracefully(err)
 	}
 
-	// copy the data models
+	// copy the data models and its methods and also make sure existing files don't overwrite
 	err = copyFilesFromTemplate("templates/data/user.go.txt", gud.RootPath+"/data/user.go")
 	if err != nil {
 		exitGracefully(err)
@@ -46,7 +46,7 @@ func doAuth() error {
 		exitGracefully(err)
 	}
 
-	// copy the  middleware
+	//copy the  middleware
 	err = copyFilesFromTemplate("templates/middleware/auth-web.go.txt", gud.RootPath+"/middleware/auth-web.go")
 	if err != nil {
 		exitGracefully(err)
@@ -116,7 +116,10 @@ func doControllers(arg4 string) error {
 	controller := string(data)
 	controller = strings.ReplaceAll(controller, "$CONTROLLERNAME$", toCamelCase(arg4))
 
-	err = os.WriteFile("controllerFileName", []byte(controller), 0644)
+	err = os.WriteFile(controllerFileName, []byte(controller), 0644)
+	if err != nil {
+		exitGracefully(err)
+	}
 
 	return nil
 }

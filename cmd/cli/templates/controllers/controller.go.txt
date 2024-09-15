@@ -5,6 +5,7 @@ import (
 	"github.com/deenikarim/gudu/render"
 	"html/template"
 	"myapp/data"
+	"net/http"
 )
 
 type Controller struct {
@@ -18,7 +19,7 @@ var customFuncs = template.FuncMap{
 }
 
 // $CONTROLLERNAME$ comment goes here
-func (c *Controller) Home(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) $CONTROLLERNAME$(w http.ResponseWriter, r *http.Request) {
 	// adding user defined functions
 	c.App.Render.AddCustomFuncs(customFuncs)
 
