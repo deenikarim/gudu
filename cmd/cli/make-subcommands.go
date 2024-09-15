@@ -150,6 +150,9 @@ func doModels(arg4 string) error {
 
 	// target file
 	targetFile := gud.RootPath + "/data/" + strings.ToLower(modelName) + ".go"
+	if fileExists(targetFile) {
+		exitGracefully(errors.New(targetFile + "file already exists"))
+	}
 
 	// final version of data going to the target file
 	model = strings.ReplaceAll(model, "$MODELNAME$", toCamelCase(modelName))
@@ -157,6 +160,44 @@ func doModels(arg4 string) error {
 
 	// copy data to the files
 	err = copyDataToFile([]byte(model), targetFile)
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	return nil
+}
+
+// doSessionTable build the subcommand for session store for make command
+func doSessionTable() error {
+	dbType := gud.DBConnection.DatabaseType
+
+	// configuring database type
+	switch dbType {
+	case "postgres", "postgresql":
+		dbType = "postgres"
+
+	case "mysql", "mariadb":
+		dbType = "mysql"
+	}
+
+	fileName := fmt.Sprintf("%d_create_session_table", time.Now().UnixMicro())
+
+	targetUpFilePath := gud.RootPath + "/migrations/" + fileName + "." + dbType + ".up.sql"
+
+	targetDownFilePath := gud.RootPath + "/migrations/" + fileName + "." + dbType + ".down.sql"
+
+	err := copyFilesFromTemplate("templates/migrations/session_table."+dbType+".sql", targetUpFilePath)
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	err = copyDataToFile([]byte("drop table session"), targetDownFilePath)
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	//run up migration by adding migrate command directly
+	err = doMigrate("up", "")
 	if err != nil {
 		exitGracefully(err)
 	}
