@@ -95,6 +95,7 @@ func showHelp() {
 	make models <name>      -create a new model in the data folder
 	make auth 				-create and run migration for authentication tables, creates models and middlewares
 	make controllers        -create a stub controllers in the controllers folder
+	make models				-create a new models in the data folder
 
 `)
 }

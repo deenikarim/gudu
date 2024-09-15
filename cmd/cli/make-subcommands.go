@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/gertd/go-pluralize"
 	"os"
 	"strings"
 	"time"
@@ -117,6 +118,45 @@ func doControllers(arg4 string) error {
 	controller = strings.ReplaceAll(controller, "$CONTROLLERNAME$", toCamelCase(arg4))
 
 	err = os.WriteFile(controllerFileName, []byte(controller), 0644)
+	if err != nil {
+		exitGracefully(err)
+	}
+
+	return nil
+}
+
+// doModels build the subcommand of models for make command
+func doModels(arg4 string) error {
+	// checking for model name
+	if arg4 == "" {
+		exitGracefully(errors.New("must give the model a name"))
+	}
+
+	data, err := templateFS.ReadFile("templates/data/model.go.txt")
+	if err != nil {
+		exitGracefully(err)
+	}
+	model := string(data)
+
+	plur := pluralize.NewClient()
+
+	var modelName = arg4
+	var tableName = arg4
+
+	if plur.IsPlural(arg4) {
+		modelName = plur.Singular(arg4)
+		tableName = strings.ToLower(tableName)
+	}
+
+	// target file
+	targetFile := gud.RootPath + "/data/" + strings.ToLower(modelName) + ".go"
+
+	// final version of data going to the target file
+	model = strings.ReplaceAll(model, "$MODELNAME$", toCamelCase(modelName))
+	model = strings.ReplaceAll(model, "$TABLENAME$", tableName)
+
+	// copy data to the files
+	err = copyDataToFile([]byte(model), targetFile)
 	if err != nil {
 		exitGracefully(err)
 	}

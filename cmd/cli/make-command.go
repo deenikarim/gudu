@@ -20,6 +20,11 @@ func doMake(arg3, arg4 string) error {
 		if err != nil {
 			exitGracefully(err)
 		}
+	case "model":
+		err := doModels(arg4)
+		if err != nil {
+			exitGracefully(err)
+		}
 	}
 
 	return nil
