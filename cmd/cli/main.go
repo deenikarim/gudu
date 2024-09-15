@@ -14,14 +14,14 @@ var gud gudu.Gudu
 // Main entry point for the command line tool
 func main() {
 	var message string
-	// arg 1 = gudu: load the command line arguments
+	// arg 1 = ./gudu: load the command line arguments
 	arg2, arg3, arg4, err := validateInputs()
 	if err != nil {
 		exitGracefully(err)
 	}
 
 	// load setup
-	setUp(arg2, arg3)
+	setUp(arg2)
 
 	switch arg2 {
 	case "help":
@@ -42,6 +42,8 @@ func main() {
 			exitGracefully(err)
 		}
 	case "migrate":
+		//push the migration files to the database
+		// migrate up as the default setting
 		if arg3 == "" {
 			arg3 = "up"
 		}
@@ -50,8 +52,6 @@ func main() {
 			exitGracefully(err)
 		}
 		message = "migrations complete!"
-	case "auth":
-
 	default:
 		showHelp()
 	}

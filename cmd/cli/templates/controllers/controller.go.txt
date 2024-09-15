@@ -1,0 +1,26 @@
+package controllers
+
+import (
+	"github.com/deenikarim/gudu"
+	"github.com/deenikarim/gudu/render"
+	"html/template"
+	"myapp/data"
+)
+
+type Controller struct {
+	App    *gudu.Gudu
+	Models data.Models
+}
+
+// Define custom functions
+var customFuncs = template.FuncMap{
+
+}
+
+// $CONTROLLERNAME$ comment goes here
+func (c *Controller) Home(w http.ResponseWriter, r *http.Request) {
+	// adding user defined functions
+	c.App.Render.AddCustomFuncs(customFuncs)
+
+}
+

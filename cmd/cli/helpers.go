@@ -11,22 +11,23 @@ import (
 	"os"
 )
 
-func setUp(arg2, arg3 string) {
+func setUp(arg2 string) {
 	// do not need a .env file when running the new, help and version cmd so don't initialize the .env
 	if arg2 != "new" && arg2 != "help" && arg2 != "version" {
 		path, err := os.Getwd()
 		if err != nil {
 			exitGracefully(err)
 		}
-
+		// 	load .env file
 		err = gud.LoadEnv(path + "/.env")
 		if err != nil {
 			exitGracefully(err)
 		}
-
+		// populate the current working directory
 		gud.RootPath = path
 		gud.DBConnection.DatabaseType = os.Getenv("DATABASE_TYPE")
 	}
+
 }
 
 func getDSN() (string, error) {
@@ -43,18 +44,19 @@ func getDSN() (string, error) {
 	dbname := os.Getenv("DATABASE_NAME")
 	sslMode := os.Getenv("DATABASE_SSL_MODE")
 
+	// convert my default jackc driver to the package used by the migrate package
 	if dbType == "pgx" {
 		dbType = "postgres"
-	}
-
-	// Use default ssl mode if not set
-	if sslMode == "" {
-		sslMode = "disable"
 	}
 
 	// check database type and build a connection string
 	switch dbType {
 	case "postgresql", "postgres":
+		// Use default ssl mode if not set
+		if sslMode == "" {
+			sslMode = "disable"
+		}
+
 		// with password configuration
 		if password != "" {
 			dsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", user, password, host, port, dbname, sslMode)
@@ -64,8 +66,12 @@ func getDSN() (string, error) {
 
 		}
 	case "mysql", "mariadb":
+		// Use default ssl mode if not set
+		if sslMode == "" {
+			sslMode = "false"
+		}
 		// Build MySQL DSN
-		dsn = fmt.Sprintf("%s:%s@/%s?parseTime=True&loc=Local", user, password, dbname)
+		dsn = fmt.Sprintf("mysql://%s:%s@/%s?parseTime=True&loc=Local", user, password, dbname)
 
 	default:
 		// Unsupported database type
@@ -85,6 +91,8 @@ func showHelp() {
 	migrate down            -reverse the most recently run migration
 	migrate reset           -run all down migration in reverse order then run run all up migration
 	make migration <name>   -create two files, one for up migration and the other for down migration
+	make controllers <name> -create a stub controller in the controllers folder
+	make models <name>      -create a new model in the data folder
 
 `)
 }
