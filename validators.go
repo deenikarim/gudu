@@ -1,6 +1,7 @@
 package gudu
 
 import (
+	"database/sql"
 	"mime/multipart"
 	"net/url"
 	"strconv"
@@ -8,10 +9,18 @@ import (
 	"time"
 )
 
+// CustomValidationFunc defines a function for custom validation.
 type CustomValidationFunc func(value string, params ...string) bool
+
+// ConditionalValidationFunc defines a function for conditional validation.
 type ConditionalValidationFunc func(data url.Values) bool
+
+// AfterHookFunc defines a function to be run after validation passes.
 type AfterHookFunc func(data url.Values) error
+
 type PreHookFunc func(data url.Values) error
+
+// ValidationErrors holds the validation errors.
 type ValidationErrors map[string][]string
 
 // Validator struct holds the data to be validated and the validation rules.
@@ -28,10 +37,11 @@ type Validator struct {
 	FileData         map[string]*multipart.FileHeader
 	DIContainer      map[string]interface{}
 	StopOnFirstFail  bool
+	DBPool           *sql.DB
 }
 
 // NewValidator creates a new Validator instance.
-func (g *Gudu) NewValidator(data url.Values, FileData map[string]*multipart.FileHeader, rules map[string][]string) *Validator {
+func (g *Gudu) NewValidator(data url.Values, FileData map[string]*multipart.FileHeader, rules map[string][]string, dbPool *sql.DB) *Validator {
 	return &Validator{
 		Data:             data,
 		Errors:           ValidationErrors{},
@@ -45,6 +55,7 @@ func (g *Gudu) NewValidator(data url.Values, FileData map[string]*multipart.File
 		FileData:         FileData,
 		DIContainer:      map[string]interface{}{},
 		StopOnFirstFail:  true, // Set this to true by default to enable stopping on first failure
+		DBPool:           dbPool,
 	}
 }
 
@@ -125,7 +136,7 @@ func (v *Validator) addError(field, defaultMsg string, params ...string) {
 
 	// Replace the first %s with the alias
 	formattedMessage := strings.Replace(message, "%s", alias, 1)
-	// Replace any remaining %s with the params
+	// Replace subsequent %s with params
 	for _, param := range params {
 		formattedMessage = strings.Replace(formattedMessage, "%s", param, 1)
 	}
@@ -134,24 +145,30 @@ func (v *Validator) addError(field, defaultMsg string, params ...string) {
 	v.Errors[field] = append(v.Errors[field], formattedMessage)
 }
 
-// ApplyRule applies a single validation rule to a field value.
+// applyRule applies a single validation rule to a field value.
 func (v *Validator) applyRule(field string, value interface{}, rule string) bool {
 	// Split the rule into its name and parameter
 	parts := strings.Split(rule, ":")
+	//The first part of the split rule, which represents the name of the validation rule (e.g., "min").
 	ruleName := parts[0]
-	var ruleParams string
 
+	//The second part of the split rule, if it exists, which represents the parameter for the rule
+	// (e.g., "3" for "min:3").
+	var ruleParams string
 	if len(parts) > 1 {
 		ruleParams = parts[1]
 	}
 
 	// Apply the appropriate validation logic based on the rule name
+	//The switch statement checks the ruleName and applies the corresponding validation logic.
 	switch ruleName {
 	case "required":
+		//Checks if the value is a string and if it is empty.
 		if strValue, ok := value.(string); ok && strValue == "" {
 			v.addError(field, "This %s is required")
 			return false
 		} else if fileValue, ok := value.(*multipart.FileHeader); ok && fileValue == nil {
+			// If the value is a file (*multipart.FileHeader), it checks if the file is nil.
 			v.addError(field, "This %s is required")
 			return false
 		}
@@ -192,13 +209,13 @@ func (v *Validator) applyRule(field string, value interface{}, rule string) bool
 			return false
 		}
 	case "unique":
-		if strValue, ok := value.(string); ok && !v.isUnique(strValue, ruleParams) {
+		if strValue, ok := value.(string); ok && !v.isUnique(field, strValue, ruleParams) {
 			v.addError(field, "The %s field must be unique")
 			return false
 		}
 	case "exists":
-		if strValue, ok := value.(string); ok && !v.exists(strValue, ruleParams) {
-			v.addError(field, "The %s field already exists")
+		if strValue, ok := value.(string); ok && !v.exists(field, strValue, ruleParams) {
+			v.addError(field, "The %s field does not exist")
 			return false
 		}
 	case "in":
@@ -248,6 +265,12 @@ func (v *Validator) applyRule(field string, value interface{}, rule string) bool
 				v.addError(field, "The %s field must contain at least one number")
 				return false
 			}
+
+			if !v.hasLetter(strValue) {
+				v.addError(field, "The %s field must contain at least one letter")
+				return false
+			}
+
 		}
 	default:
 		if customFuncs, ok := v.CustomValidation[ruleName]; ok {
@@ -279,4 +302,14 @@ func (v *Validator) ValidateDateOrder(startField, endField string) {
 		v.addErrorForCrossFieldValidation(startField, endField, "date_order", "The %s must be before %s.")
 	}
 
+}
+
+// DefaultRules defines a set of commonly used rules
+func (v *Validator) DefaultRules() {
+	v.Rules = map[string][]string{
+		"username": {"required", "min:3", "max:20", "unique:users"}, // Username must be unique, min 3 characters, max 20
+		"email":    {"required", "email", "unique:users"},           // Email must be valid and unique
+		"password": {"required", "min:8", "confirmed", "password"},  // Password must be min 8 characters and confirmed
+		"age":      {"required", "numeric", "min:18"},               // Age must be numeric and at least 18
+	}
 }

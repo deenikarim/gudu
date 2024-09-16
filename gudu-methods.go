@@ -9,12 +9,9 @@ import (
 	"github.com/deenikarim/gudu/mailer"
 	"github.com/deenikarim/gudu/mails"
 	"github.com/deenikarim/gudu/render"
-	"github.com/deenikarim/gudu/validate"
 	"github.com/dgraph-io/badger"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -172,24 +169,6 @@ func (g *Gudu) createConnToBadger() *badger.DB {
 		return nil
 	}
 	return db
-}
-
-// NewValidator creates a new Validator instance.
-func NewValidator(data url.Values, FileData map[string]*multipart.FileHeader, rules map[string][]string) *validate.Validator {
-	return &validate.Validator{
-		Data:             data,
-		Errors:           validate.ValidationErrors{},
-		Rules:            rules,
-		CustomValidation: make(map[string]validate.CustomValidationFunc),
-		Conditionals:     make(map[string]validate.ConditionalValidationFunc),
-		CustomMessages:   make(map[string]string),
-		AttributeAliases: make(map[string]string),
-		AfterHooks:       []validate.AfterHookFunc{},
-		PreHooks:         []validate.PreHookFunc{},
-		FileData:         FileData,
-		DIContainer:      map[string]interface{}{},
-		StopOnFirstFail:  true, // Set this to true by default to enable stopping on first failure
-	}
 }
 
 func (g *Gudu) createMailer() mailer.Mailer {

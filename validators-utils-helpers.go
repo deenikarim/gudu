@@ -1,6 +1,8 @@
 package gudu
 
 import (
+	"context"
+	"fmt"
 	"image"
 	"mime/multipart"
 	"regexp"
@@ -81,16 +83,47 @@ func (v *Validator) isIn(value, param string) bool {
 // tip: Use a mock database or data source to check for uniqueness and existence.
 
 // isUnique checks if a field value is unique in the mock database.
-func (v *Validator) isUnique(value, param string) bool {
-	// Implementation for uniqueness check
-	return true
+func (v *Validator) isUnique(field, value, tableName string) bool {
+	//This line builds an SQL query to check how many rows in the table tableName have
+	//the given field equal to the value.
+	query := fmt.Sprintf("SELECT COUNT(1) FROM %s WHERE %s = $1", tableName, field)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var count int
+	err := v.DBPool.QueryRowContext(ctx, query, value).Scan(&count)
+	if err != nil {
+		v.addError(field, "Database error during uniqueness check")
+		return false
+	}
+
+	//If count == 0, it means the value is unique (because no rows were found in the database
+	//with that value), so the function returns true.
+	//Otherwise, if the value already exists, it returns false
+	return count == 0
 }
 
 // exists checks if a field value exists in the mock database.
-func (v *Validator) exists(value, param string) bool {
-	// Implementation for existence check
-	return true
+func (v *Validator) exists(field, value, tableName string) bool {
+	query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM %s WHERE %s = $1)", tableName, field)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var exist bool
+	err := v.DBPool.QueryRowContext(ctx, query, value).Scan(&exist)
+	if err != nil {
+		v.addError(field, "Database error during existence check")
+		return false
+	}
+
+	//f count > 0, it means the value exists in the database, so the function returns true.
+	//Otherwise, it returns false (i.e., the value does not exist).
+	return exist
 }
+
+// return at most one row.
 
 // isValidMimeType checks if a file's MIME type is validate.
 func (v *Validator) isValidMimeType(file *multipart.FileHeader, mimes string) bool {
@@ -215,4 +248,9 @@ func (v *Validator) hasNumber(value string) bool {
 		}
 	}
 	return false
+}
+
+func (v *Validator) hasLetter(s string) bool {
+	re := regexp.MustCompile(`[a-zA-Z]`)
+	return re.MatchString(s)
 }
